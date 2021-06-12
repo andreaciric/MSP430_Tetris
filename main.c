@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <stdint.h>
 
-void spi_max(uint8_t address, uint8_t data);
+void spi_send(uint8_t address, uint8_t data);
 void init_8x8B_click(void);
 void init(void);
 
@@ -97,7 +97,7 @@ int main(void)
       for (j = 0; j < 4; j++){                          // menja oblike
           for (k = 0; k < 8; k++){                      // pada do dna
               for (i = 0; i < 8; i++){                  // printa
-                    spi_max(digit[i], all_shapes[j][0][i]);
+                    spi_send(digit[i], all_shapes[j][0][i]);
               }
 
               _delay_cycles(500000);
@@ -139,7 +139,7 @@ void init(void)
 
 // Send 16 bits as: xxxxaaaadddddddd (ignore, address, data)
 // and use active low Chip Select
-void spi_max(uint8_t address, uint8_t data)
+void spi_send(uint8_t address, uint8_t data)
 {
     P2OUT &= ~BIT7;                 // CS low
     _delay_cycles(5000);
@@ -155,24 +155,24 @@ void spi_max(uint8_t address, uint8_t data)
 void init_8x8B_click(void)
 {
     // Initialise MAX7219 with 8x8 led matrix
-    spi_max(DISPLAYTEST, 0x00);    // NO OP (seems needed after power on)
-    spi_max(SCANLIMIT, 0x07);   // Enable all digits (always needed for current/8 per row)
-    spi_max(DECODEMODE, 0x00);   // Display intensity (0x00 to 0x0F)
+    spi_send(DISPLAYTEST, 0x00);    // NO OP (seems needed after power on)
+    spi_send(SCANLIMIT, 0x07);   // Enable all digits (always needed for current/8 per row)
+    spi_send(DECODEMODE, 0x00);   // Display intensity (0x00 to 0x0F)
 
     // Clear all rows/digits
-    spi_max(DIGIT0, 0);
-    spi_max(DIGIT1, 0);
-    spi_max(DIGIT2, 0);
-    spi_max(DIGIT3, 0);
-    spi_max(DIGIT4, 0);
-    spi_max(DIGIT5, 0);
-    spi_max(DIGIT6, 0);
-    spi_max(DIGIT7, 0);
-    spi_max(SHUTDOWN, 0); // Wake oscillators/display up
+    spi_send(DIGIT0, 0);
+    spi_send(DIGIT1, 0);
+    spi_send(DIGIT2, 0);
+    spi_send(DIGIT3, 0);
+    spi_send(DIGIT4, 0);
+    spi_send(DIGIT5, 0);
+    spi_send(DIGIT6, 0);
+    spi_send(DIGIT7, 0);
+    spi_send(SHUTDOWN, 0); // Wake oscillators/display up
 
     __delay_cycles(100000);
-    spi_max(SHUTDOWN, 1);
-    spi_max(INTENSITY, 0x3);
+    spi_send(SHUTDOWN, 1);
+    spi_send(INTENSITY, 0x3);
 
 
 
