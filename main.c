@@ -38,7 +38,7 @@ uint8_t digit[] = {DIGIT0, DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5, DIGIT6, DIGIT
 /* init tetris shapes */
 uint8_t kvadrat[] = {0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00};
 
-uint8_t shapes[8][8] = {{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00}, // O
+uint8_t shapes[7][8] = {{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00}, // O
                       {0x00, 0x00, SEG7, SEG7, SEG7, SEG7, 0x00, 0x00},             // I
                       {0x00, 0x00, 0x00, SEG7, SEG7, SEG7+SEG6, 0x00, 0x00},        // J
                       {0x00, 0x00, SEG7+SEG6, SEG7, SEG7, 0x00, 0x00, 0x00},        // L
@@ -47,6 +47,42 @@ uint8_t shapes[8][8] = {{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x0
                       {0x00, 0x00, SEG7, SEG7+SEG6, SEG6, 0x00, 0x00, 0x00},        // Z
 };
 
+uint8_t all_shapes[7][4][8] = {{{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},         // O 1
+                               {0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},          // O 2
+                               {0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},          // O 3
+                               {0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},},        // O 4
+
+                               {{0x00, 0x00, SEG7, SEG7, SEG7, SEG7, 0x00, 0x00},                   // I 1
+                               {0x00, 0x00, 0x00, SEG7+SEG6+SEG5+SEG4, 0x00, 0x00, 0x00, 0x00},     // I 2
+                               {0x00, 0x00, SEG7, SEG7, SEG7, SEG7, 0x00, 0x00},                    // I 3
+                               {0x00, 0x00, 0x00, 0x00, SEG7+SEG6+SEG5+SEG4, 0x00, 0x00, 0x00},},   // I 4
+
+                               {{0x00, 0x00, 0x00, SEG7, SEG7, SEG7+SEG6, 0x00, 0x00},              // J 1
+                               {0x00, 0x00, 0x00, SEG5, SEG7+SEG6+SEG5, 0x00, 0x00, 0x00},          // J 2
+                               {0x00, 0x00, 0x00, SEG7+SEG6, SEG6, SEG6, 0x00, 0x00},               // J 3
+                               {0x00, 0x00, 0x00, 0x00, SEG7+SEG6+SEG5, SEG7, 0x00, 0x00},},        // J 4
+
+                               {{0x00, 0x00, SEG7+SEG6, SEG7, SEG7, 0x00, 0x00, 0x00},              // L 1
+                               {0x00, 0x00, SEG7, SEG7+SEG6+SEG5, 0x00, 0x00, 0x00, 0x00},          // L 2
+                               {0x00, 0x00, SEG6, SEG6, SEG7+SEG6, 0x00, 0x00, 0x00},               // L 3
+                               {0x00, 0x00, 0x00, SEG7+SEG6+SEG5, SEG5, 0x00, 0x00, 0x00},},        // L 4
+
+                               {{0x00, 0x00, 0x00, SEG6, SEG7+SEG6, SEG7, 0x00, 0x00},              // S 1
+                               {0x00, 0x00, 0x00, 0x00, SEG7+SEG6, SEG6+SEG5, 0x00, 0x00},          // S 2
+                               {0x00, 0x00, 0x00, SEG6, SEG7+SEG6, SEG7, 0x00, 0x00},               // S 3
+                               {0x00, 0x00, 0x00, 0x00, SEG7+SEG6, SEG6+SEG5, 0x00, 0x00},},        // S 4
+
+                               {{0x00, 0x00, 0x00, SEG7, SEG7+SEG6, SEG7, 0x00, 0x00},              // T 1
+                               {0x00, 0x00, 0x00, SEG6, SEG7+SEG6+SEG5, 0x00, 0x00, 0x00},          // T 2
+                               {0x00, 0x00, 0x00, SEG6, SEG7+SEG6, SEG6, 0x00, 0x00},               // T 3
+                               {0x00, 0x00, 0x00, 0x00, SEG7+SEG6+SEG5, SEG6, 0x00, 0x00},},        // T 4
+
+                               {{0x00, 0x00, SEG7, SEG7+SEG6, SEG6, 0x00, 0x00, 0x00},              // Z 1
+                               {0x00, 0x00, SEG6+SEG5, SEG7+SEG6, 0x00, 0x00, 0x00, 0x00},          // Z 2
+                               {0x00, 0x00, SEG7, SEG7+SEG6, SEG6, 0x00, 0x00, 0x00},               // Z 1
+                               {0x00, 0x00, SEG6+SEG5, SEG7+SEG6, 0x00, 0x00, 0x00, 0x00},},        // Z 2
+
+};
 
 
 int main(void)
@@ -58,17 +94,17 @@ int main(void)
 
   while (1){
 
-      for (j = 0; j < 8; j++){                          // menja oblike
+      for (j = 0; j < 4; j++){                          // menja oblike
           for (k = 0; k < 8; k++){                      // pada do dna
               for (i = 0; i < 8; i++){                  // printa
-                    spi_max(digit[i], shapes[j][i]);
+                    spi_max(digit[i], all_shapes[j][0][i]);
               }
 
               _delay_cycles(500000);
 
               // shift down
               for (i = 0; i < 8; i++){                  // pomera
-                  shapes[j][i] = ( shapes[j][i] >> 1 );
+                  all_shapes[j][0][i] = ( all_shapes[j][0][i] >> 1 );
               }
           }
       }
