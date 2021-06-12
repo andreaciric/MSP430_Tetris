@@ -81,7 +81,6 @@ uint8_t all_shapes[7][4][8] = {{{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0
                                {0x00, 0x00, SEG6+SEG5, SEG7+SEG6, 0x00, 0x00, 0x00, 0x00},          // Z 2
                                {0x00, 0x00, SEG7, SEG7+SEG6, SEG6, 0x00, 0x00, 0x00},               // Z 1
                                {0x00, 0x00, SEG6+SEG5, SEG7+SEG6, 0x00, 0x00, 0x00, 0x00},},        // Z 2
-
 };
 
 
@@ -108,9 +107,6 @@ int main(void)
               }
           }
       }
-      i = 0;
-      j = 0;
-      k = 0;
   }
 
 }
