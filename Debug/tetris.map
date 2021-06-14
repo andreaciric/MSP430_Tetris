@@ -1,7 +1,7 @@
 ******************************************************************************
                   MSP430 Linker Unix v20.2.5                   
 ******************************************************************************
->> Linked Sat Jun 12 22:33:31 2021
+>> Linked Mon Jun 14 18:47:18 2021
 
 OUTPUT FILE NAME:   <tetris.out>
 ENTRY POINT SYMBOL: "_c_int00_noargs"  address: 00004400
@@ -19,8 +19,8 @@ MEMORY CONFIGURATION
   INFOB                 00001900   00000080  00000000  00000080  RWIX
   INFOA                 00001980   00000080  00000000  00000080  RWIX
   USBRAM                00001c00   00000800  00000000  00000800  RWIX
-  RAM                   00002400   00002000  000000eb  00001f15  RWIX
-  FLASH                 00004400   0000bb80  00000068  0000bb18  RWIX
+  RAM                   00002400   00002000  000001d6  00001e2a  RWIX
+  FLASH                 00004400   0000bb80  0000009c  0000bae4  RWIX
   INT00                 0000ff80   00000002  00000000  00000002  RWIX
   INT01                 0000ff82   00000002  00000000  00000002  RWIX
   INT02                 0000ff84   00000002  00000000  00000002  RWIX
@@ -85,7 +85,7 @@ MEMORY CONFIGURATION
   INT61                 0000fffa   00000002  00000002  00000000  RWIX
   INT62                 0000fffc   00000002  00000002  00000000  RWIX
   RESET                 0000fffe   00000002  00000002  00000000  RWIX
-  FLASH2                00010000   000143f8  000002bc  0001413c  RWIX
+  FLASH2                00010000   000143f8  000003fe  00013ffa  RWIX
 
 
 SECTION ALLOCATION MAP
@@ -93,10 +93,13 @@ SECTION ALLOCATION MAP
  output                                  attributes/
 section   page    origin      length       input sections
 --------  ----  ----------  ----------   ----------------
-.data      0    00002400    0000004b     UNINITIALIZED
-                  00002400    00000040     main.obj (.data:shapes)
-                  00002440    00000008     main.obj (.data:digit)
-                  00002448    00000003     main.obj (.data)
+.data      0    00002400    00000136     UNINITIALIZED
+                  00002400    000000e0     main.obj (.data:all_shapes)
+                  000024e0    00000020     main.obj (.data:next)
+                  00002500    00000020     main.obj (.data:temp)
+                  00002520    00000008     main.obj (.data:digit)
+                  00002528    00000008     main.obj (.data:screen)
+                  00002530    00000006     main.obj (.data)
 
 .stack     0    00004360    000000a0     UNINITIALIZED
                   00004360    00000004     rts430x_lc_rd_eabi.lib : boot.c.obj (.stack)
@@ -107,11 +110,11 @@ section   page    origin      length       input sections
                   00004400    0000001c     rts430x_lc_rd_eabi.lib : boot.c.obj (.text:_isr:_c_int00_noargs)
                   0000441c    00000008                            : isr_trap.asm.obj (.text:_isr:__TI_ISR_TRAP)
 
-.cinit     0    00004424    00000044     
-                  00004424    00000033     (.cinit..data.load) [load image, compression = lzss]
-                  00004457    00000001     --HOLE-- [fill = 0]
-                  00004458    00000008     (__TI_handler_table)
-                  00004460    00000008     (__TI_cinit_table)
+.cinit     0    00004424    00000078     
+                  00004424    00000067     (.cinit..data.load) [load image, compression = lzss]
+                  0000448b    00000001     --HOLE-- [fill = 0]
+                  0000448c    00000008     (__TI_handler_table)
+                  00004494    00000008     (__TI_cinit_table)
 
 .binit     0    00004400    00000000     
 
@@ -195,27 +198,27 @@ SYSNMI     0    0000fffc    00000002
 .reset     0    0000fffe    00000002     
                   0000fffe    00000002     rts430x_lc_rd_eabi.lib : boot.c.obj (.reset)
 
-.text      0    00010000    000002bc     
-                  00010000    000000be     main.obj (.text:main)
-                  000100be    00000084     main.obj (.text:init_8x8B_click)
-                  00010142    00000076     rts430x_lc_rd_eabi.lib : copy_decompress_lzss.c.obj (.text:decompress:lzss:__TI_decompress_lzss)
-                  000101b8    00000054                            : autoinit.c.obj (.text:__TI_auto_init_nobinit_nopinit_hold_wdt:__TI_auto_init_nobinit_nopinit_hold_wdt)
-                  0001020c    00000048     main.obj (.text:spi_max)
-                  00010254    00000036     main.obj (.text:init)
-                  0001028a    00000014     rts430x_lc_rd_eabi.lib : memcpy.c.obj (.text:memcpy)
-                  0001029e    00000012                            : copy_decompress_none.c.obj (.text:decompress:none:__TI_decompress_none)
-                  000102b0    00000006                            : exit.c.obj (.text:abort)
-                  000102b6    00000004                            : pre_init.c.obj (.text:_system_pre_init)
-                  000102ba    00000002                            : startup.c.obj (.text:_system_post_cinit)
+.text      0    00010000    000003fe     
+                  00010000    00000200     main.obj (.text:main)
+                  00010200    00000084     main.obj (.text:init_8x8B_click)
+                  00010284    00000076     rts430x_lc_rd_eabi.lib : copy_decompress_lzss.c.obj (.text:decompress:lzss:__TI_decompress_lzss)
+                  000102fa    00000054                            : autoinit.c.obj (.text:__TI_auto_init_nobinit_nopinit_hold_wdt:__TI_auto_init_nobinit_nopinit_hold_wdt)
+                  0001034e    00000048     main.obj (.text:spi_send)
+                  00010396    00000036     main.obj (.text:init)
+                  000103cc    00000014     rts430x_lc_rd_eabi.lib : memcpy.c.obj (.text:memcpy)
+                  000103e0    00000012                            : copy_decompress_none.c.obj (.text:decompress:none:__TI_decompress_none)
+                  000103f2    00000006                            : exit.c.obj (.text:abort)
+                  000103f8    00000004                            : pre_init.c.obj (.text:_system_pre_init)
+                  000103fc    00000002                            : startup.c.obj (.text:_system_post_cinit)
 
 MODULE SUMMARY
 
        Module                       code   ro data   rw data
        ------                       ----   -------   -------
     ./
-       main.obj                     448    0         75     
+       main.obj                     770    0         310    
     +--+----------------------------+------+---------+---------+
-       Total:                       448    0         75     
+       Total:                       770    0         310    
                                                             
     /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/lib/rts430x_lc_rd_eabi.lib
        copy_decompress_lzss.c.obj   118    0         0      
@@ -253,20 +256,20 @@ MODULE SUMMARY
        Total:                       288    46        0      
                                                             
        Stack:                       0      0         160    
-       Linker Generated:            0      67        0      
+       Linker Generated:            0      119       0      
     +--+----------------------------+------+---------+---------+
-       Grand Total:                 736    113       235    
+       Grand Total:                 1058   165       470    
 
 
 LINKER GENERATED COPY TABLES
 
-__TI_cinit_table @ 00004460 records: 1, size/record: 8, table size: 8
-	.data: load addr=00004424, load size=00000033 bytes, run addr=00002400, run size=0000004b bytes, compression=lzss
+__TI_cinit_table @ 00004494 records: 1, size/record: 8, table size: 8
+	.data: load addr=00004424, load size=00000067 bytes, run addr=00002400, run size=00000136 bytes, compression=lzss
 
 
 LINKER GENERATED HANDLER TABLE
 
-__TI_handler_table @ 00004458 records: 2, size/record: 4, table size: 8
+__TI_handler_table @ 0000448c records: 2, size/record: 4, table size: 8
 	index: 0, handler: __TI_decompress_lzss
 	index: 1, handler: __TI_decompress_none
 
@@ -357,7 +360,7 @@ address   name
 00000732  ADC12MEM9                              
 00000733  ADC12MEM9_H                            
 00000732  ADC12MEM9_L                            
-000102b0  C$$EXIT                                
+000103f2  C$$EXIT                                
 000008c0  CBCTL0                                 
 000008c1  CBCTL0_H                               
 000008c0  CBCTL0_L                               
@@ -1008,14 +1011,14 @@ address   name
 0000015c  WDTCTL_L                               
 00004400  __STACK_END                            
 000000a0  __STACK_SIZE                           
-00004460  __TI_CINIT_Base                        
-00004468  __TI_CINIT_Limit                       
-00004458  __TI_Handler_Table_Base                
-00004460  __TI_Handler_Table_Limit               
+00004494  __TI_CINIT_Base                        
+0000449c  __TI_CINIT_Limit                       
+0000448c  __TI_Handler_Table_Base                
+00004494  __TI_Handler_Table_Limit               
 0000441c  __TI_ISR_TRAP                          
-000101b8  __TI_auto_init_nobinit_nopinit_hold_wdt
-00010142  __TI_decompress_lzss                   
-0001029e  __TI_decompress_none                   
+000102fa  __TI_auto_init_nobinit_nopinit_hold_wdt
+00010284  __TI_decompress_lzss                   
+000103e0  __TI_decompress_none                   
 0000ffd2  __TI_int41                             
 0000ffd4  __TI_int42                             
 0000ffd6  __TI_int43                             
@@ -1045,19 +1048,25 @@ ffffffff  __c_args__
 00004400  _c_int00_noargs                        
 0000fffe  _reset_vector                          
 00004360  _stack                                 
-000102ba  _system_post_cinit                     
-000102b6  _system_pre_init                       
-000102b0  abort                                  
-00002440  digit                                  
-00002448  i                                      
-00010254  init                                   
-000100be  init_8x8B_click                        
-00002449  j                                      
-0000244a  k                                      
+000103fc  _system_post_cinit                     
+000103f8  _system_pre_init                       
+000103f2  abort                                  
+00002400  all_shapes                             
+00002534  bottom                                 
+00002520  digit                                  
+00002533  dont_allow                             
+00002535  end                                    
+00002530  i                                      
+00010396  init                                   
+00010200  init_8x8B_click                        
+00002531  j                                      
+00002532  k                                      
 00010000  main                                   
-0001028a  memcpy                                 
-00002400  shapes                                 
-0001020c  spi_max                                
+000103cc  memcpy                                 
+000024e0  next                                   
+00002528  screen                                 
+0001034e  spi_send                               
+00002500  temp                                   
 
 
 GLOBAL SYMBOLS: SORTED BY Symbol Address 
@@ -1795,19 +1804,25 @@ address   name
 000023fd  USBIEPBBAY_7                           
 000023fe  USBIEPBCTY_7                           
 000023ff  USBIEPSIZXY_7                          
-00002400  shapes                                 
-00002440  digit                                  
-00002448  i                                      
-00002449  j                                      
-0000244a  k                                      
+00002400  all_shapes                             
+000024e0  next                                   
+00002500  temp                                   
+00002520  digit                                  
+00002528  screen                                 
+00002530  i                                      
+00002531  j                                      
+00002532  k                                      
+00002533  dont_allow                             
+00002534  bottom                                 
+00002535  end                                    
 00004360  _stack                                 
 00004400  __STACK_END                            
 00004400  _c_int00_noargs                        
 0000441c  __TI_ISR_TRAP                          
-00004458  __TI_Handler_Table_Base                
-00004460  __TI_CINIT_Base                        
-00004460  __TI_Handler_Table_Limit               
-00004468  __TI_CINIT_Limit                       
+0000448c  __TI_Handler_Table_Base                
+00004494  __TI_CINIT_Base                        
+00004494  __TI_Handler_Table_Limit               
+0000449c  __TI_CINIT_Limit                       
 0000ffd2  __TI_int41                             
 0000ffd4  __TI_int42                             
 0000ffd6  __TI_int43                             
@@ -1832,20 +1847,20 @@ address   name
 0000fffc  __TI_int62                             
 0000fffe  _reset_vector                          
 00010000  main                                   
-000100be  init_8x8B_click                        
-00010142  __TI_decompress_lzss                   
-000101b8  __TI_auto_init_nobinit_nopinit_hold_wdt
-0001020c  spi_max                                
-00010254  init                                   
-0001028a  memcpy                                 
-0001029e  __TI_decompress_none                   
-000102b0  C$$EXIT                                
-000102b0  abort                                  
-000102b6  _system_pre_init                       
-000102ba  _system_post_cinit                     
+00010200  init_8x8B_click                        
+00010284  __TI_decompress_lzss                   
+000102fa  __TI_auto_init_nobinit_nopinit_hold_wdt
+0001034e  spi_send                               
+00010396  init                                   
+000103cc  memcpy                                 
+000103e0  __TI_decompress_none                   
+000103f2  C$$EXIT                                
+000103f2  abort                                  
+000103f8  _system_pre_init                       
+000103fc  _system_post_cinit                     
 ffffffff  __TI_pprof_out_hndl                    
 ffffffff  __TI_prof_data_size                    
 ffffffff  __TI_prof_data_start                   
 ffffffff  __c_args__                             
 
-[783 symbols]
+[789 symbols]

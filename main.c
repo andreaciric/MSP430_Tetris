@@ -4,6 +4,8 @@
 void spi_send(uint8_t address, uint8_t data);
 void init_8x8B_click(void);
 void init(void);
+void get_lowest_coord(uint8_t shape);
+void check(void);
 
 // MAX7219 Register addresses
 #define NOOP        0x00
@@ -34,18 +36,27 @@ void init(void);
 // variables
 uint8_t i = 0, j = 0, k = 0;
 uint8_t digit[] = {DIGIT0, DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5, DIGIT6, DIGIT7};
+uint8_t segments[] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
+uint8_t x, y;
+uint8_t temp_shape;
+uint8_t dont_allow = 0;
+uint8_t bottom = 0;
+uint8_t end = 0;
 
 /* init tetris shapes */
-uint8_t kvadrat[] = {0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00};
+uint8_t screen[] = {SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0};
 
-uint8_t shapes[7][8] = {{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00}, // O
-                      {0x00, 0x00, SEG7, SEG7, SEG7, SEG7, 0x00, 0x00},             // I
-                      {0x00, 0x00, 0x00, SEG7, SEG7, SEG7+SEG6, 0x00, 0x00},        // J
-                      {0x00, 0x00, SEG7+SEG6, SEG7, SEG7, 0x00, 0x00, 0x00},        // L
-                      {0x00, 0x00, 0x00, SEG6, SEG7+SEG6, SEG7, 0x00, 0x00},        // S
-                      {0x00, 0x00, 0x00, SEG7, SEG7+SEG6, SEG7, 0x00, 0x00},        // T
-                      {0x00, 0x00, SEG7, SEG7+SEG6, SEG6, 0x00, 0x00, 0x00},        // Z
-};
+uint8_t temp[4][8] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                      {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                      {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                      {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+ };
+
+uint8_t next[4][8] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                      {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                      {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                      {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+ };
 
 uint8_t all_shapes[7][4][8] = {{{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},         // O 1
                                {0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},          // O 2
@@ -86,30 +97,91 @@ uint8_t all_shapes[7][4][8] = {{{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0
 
 int main(void)
 {
-
   init();
   init_8x8B_click();
 
 
-  while (1){
+  while (!end){
 
-      for (j = 0; j < 4; j++){                          // menja oblike
-          for (k = 0; k < 8; k++){                      // pada do dna
-              for (i = 0; i < 8; i++){                  // printa
-                    spi_send(digit[i], all_shapes[j][0][i]);
-              }
+      for (i = 0; i < 4; i++){
+            for (j = 0; j < 8; j++){
+                temp[i][j] = all_shapes[0][i][j];
+            }
+        }
 
-              _delay_cycles(500000);
+      bottom = 0;
+      dont_allow = 0;
 
-              // shift down
-              for (i = 0; i < 8; i++){                  // pomera
-                  all_shapes[j][0][i] = ( all_shapes[j][0][i] >> 1 );
+      while (!bottom){
+
+          _delay_cycles(500000);
+
+          /* PRINT SCREEN */
+          for (i = 0; i < 8; i++){
+                spi_send(digit[i], temp[0][i] | screen[i] );
+          }
+
+          /* SHIFT DOWN */
+          for (i = 0; i < 4; i++){
+              for (j = 0; j < 8; j++){
+                  next[i][j] = ( temp[i][j] >> 1 );
               }
           }
+
+          for (i = 0; i < 8; i++) {                             //proverava preklapanje sledeceg
+              if (((screen[i] & next[0][i]) != 0) && !dont_allow) {
+                  dont_allow = 1;
+              }
+          }
+
+          if (dont_allow){
+              for (i = 0; i < 8; i++){
+                  screen[i] |=  temp[0][i];
+                  bottom = 1;
+              }
+          }
+          else{
+              for (i = 0; i < 4; i++){
+                  for (j = 0; j < 8; j++){
+                      temp[i][j] = next[i][j];
+                  }
+              }
+
+          }
       }
+
+      for (i = 0; i < 8; i++){
+          if (!end && ((screen[i] & SEG7) != 0)){
+              end = 1;
+          }
+      }
+
   }
 
 }
+
+
+void check(void){
+    int i = 7;
+    while((all_shapes[0][0][i] != 0) && (i >= 0)){
+        get_lowest_cord(all_shapes[0][0][i]);
+        y = 7 - i;
+        i--;
+    }
+
+}
+
+void get_lowest_coord(uint8_t row){
+
+    uint8_t found = 0;
+    uint8_t i = 7;
+    while ((!found) && (i >= 0)){
+        found = ((row & segments[7-i]) != 0);
+        i--;
+    }
+    x = i + 1;
+}
+
 
 void init(void)
 {
@@ -169,8 +241,5 @@ void init_8x8B_click(void)
     __delay_cycles(100000);
     spi_send(SHUTDOWN, 1);
     spi_send(INTENSITY, 0x3);
-
-
-
 
  }
