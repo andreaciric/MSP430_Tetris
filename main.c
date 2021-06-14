@@ -4,8 +4,6 @@
 void spi_send(uint8_t address, uint8_t data);
 void init_8x8B_click(void);
 void init(void);
-void get_lowest_coord(uint8_t shape);
-void check(void);
 
 // MAX7219 Register addresses
 #define NOOP        0x00
@@ -37,8 +35,6 @@ void check(void);
 uint8_t i = 0, j = 0, k = 0;
 uint8_t digit[] = {DIGIT0, DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5, DIGIT6, DIGIT7};
 uint8_t segments[] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
-uint8_t x, y;
-uint8_t temp_shape;
 uint8_t dont_allow = 0;
 uint8_t bottom = 0;
 uint8_t end = 0;
@@ -100,9 +96,9 @@ int main(void)
   init();
   init_8x8B_click();
 
-
   while (!end){
 
+      /* GET OBJECT */
       for (i = 0; i < 4; i++){
             for (j = 0; j < 8; j++){
                 temp[i][j] = all_shapes[0][i][j];
@@ -128,25 +124,25 @@ int main(void)
               }
           }
 
-          for (i = 0; i < 8; i++) {                             //proverava preklapanje sledeceg
+          /* CHECK IF NEXT MOVE CAN BE REALISED */
+          for (i = 0; i < 8; i++) {
               if (((screen[i] & next[0][i]) != 0) && !dont_allow) {
                   dont_allow = 1;
               }
           }
 
+          /* STACK OBJECT OR GO ON */
           if (dont_allow){
               for (i = 0; i < 8; i++){
                   screen[i] |=  temp[0][i];
                   bottom = 1;
               }
-          }
-          else{
+          } else{
               for (i = 0; i < 4; i++){
                   for (j = 0; j < 8; j++){
                       temp[i][j] = next[i][j];
                   }
               }
-
           }
       }
 
@@ -155,33 +151,8 @@ int main(void)
               end = 1;
           }
       }
-
   }
-
 }
-
-
-void check(void){
-    int i = 7;
-    while((all_shapes[0][0][i] != 0) && (i >= 0)){
-        get_lowest_cord(all_shapes[0][0][i]);
-        y = 7 - i;
-        i--;
-    }
-
-}
-
-void get_lowest_coord(uint8_t row){
-
-    uint8_t found = 0;
-    uint8_t i = 7;
-    while ((!found) && (i >= 0)){
-        found = ((row & segments[7-i]) != 0);
-        i--;
-    }
-    x = i + 1;
-}
-
 
 void init(void)
 {
