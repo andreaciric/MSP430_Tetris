@@ -1,9 +1,11 @@
 #include <msp430.h>
 #include <stdint.h>
 
-void spi_send(uint8_t address, uint8_t data);
+void spi_send_16(uint8_t address, uint8_t data);
+void spi_send_8(uint8_t data);
 void init_8x8B_click(void);
 void init(void);
+void init_thumbstick(void);
 
 // MAX7219 Register addresses
 #define NOOP        0x00
@@ -38,6 +40,14 @@ uint8_t segments[] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
 uint8_t dont_allow = 0;
 uint8_t bottom = 0;
 uint8_t end = 0;
+uint8_t clear_row = 1;
+uint8_t clear_bit = 0;
+
+uint16_t DoutFirstByte = 0;
+uint16_t DoutSecondByte = 0;
+uint16_t digitalValue = 0;
+
+float value = -1;
 
 /* init tetris shapes */
 uint8_t screen[] = {SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0};
@@ -52,6 +62,16 @@ uint8_t next[4][8] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+ };
+
+uint8_t full_row[8][8] = {{SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0},
+                      {SEG1, SEG1, SEG1, SEG1, SEG1, SEG1, SEG1, SEG1},
+                      {SEG2, SEG2, SEG2, SEG2, SEG2, SEG2, SEG2, SEG2},
+                      {SEG3, SEG3, SEG3, SEG3, SEG3, SEG3, SEG3, SEG3},
+                      {SEG4, SEG4, SEG4, SEG4, SEG4, SEG4, SEG4, SEG4},
+                      {SEG5, SEG5, SEG5, SEG5, SEG5, SEG5, SEG5, SEG5},
+                      {SEG6, SEG6, SEG6, SEG6, SEG6, SEG6, SEG6, SEG6},
+                      {SEG7, SEG7, SEG7, SEG7, SEG7, SEG7, SEG7, SEG7},
  };
 
 uint8_t all_shapes[7][4][8] = {{{0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00},         // O 1
@@ -98,6 +118,7 @@ int main(void)
 
   while (!end){
 
+
       /* GET OBJECT */
       for (i = 0; i < 4; i++){
             for (j = 0; j < 8; j++){
@@ -110,11 +131,13 @@ int main(void)
 
       while (!bottom){
 
+          init_thumbstick();
+
           _delay_cycles(500000);
 
           /* PRINT SCREEN */
           for (i = 0; i < 8; i++){
-                spi_send(digit[i], temp[0][i] | screen[i] );
+                spi_send_16(digit[i], temp[0][i] | screen[i] );
           }
 
           /* SHIFT DOWN */
@@ -146,6 +169,26 @@ int main(void)
           }
       }
 
+      /* DELETE FULL ROWS */
+
+      for (i = 0; i < 8; i++){
+        for (j = 0; j < 8; j++){
+            if ((full_row[i][j] & screen[j]) != 1)      //checks if row is (not) full
+                clear_row = 0;
+        }
+        if (clear_row){
+            clear_bit = 1 << i;
+            for (k = 0; k < 8; k++){                    //clears full row
+                screen[k] ^= clear_bit;
+            }
+            for (j = i; j < 8; j++){                    //moves down upper fields
+                screen[j] = ( screen[j] >> 1 );
+                spi_send_16(digit[j],  screen[j] );
+            }
+        }
+      }
+
+      /* CHECK IF GAME ENDS */
       for (i = 0; i < 8; i++){
           if (!end && ((screen[i] & SEG7) != 0)){
               end = 1;
@@ -161,7 +204,9 @@ void init(void)
     /*  */
     P2OUT |= BIT7;                            // Set P6.4 for CS
     P2DIR |= BIT7;                            // Set P6.4 to output direction
-    P3SEL |= BIT0+BIT2;                       // P3.0,2 option select
+    P2OUT |= BIT6;                            // Set P6.4 for CS
+    P2DIR |= BIT6;                            // Set P6.4 to output direction
+    P3SEL |= BIT0+BIT1+BIT2;                  // P3.0,2 option select
 
 
     /*  */
@@ -178,7 +223,7 @@ void init(void)
 
 // Send 16 bits as: xxxxaaaadddddddd (ignore, address, data)
 // and use active low Chip Select
-void spi_send(uint8_t address, uint8_t data)
+void spi_send_16(uint8_t address, uint8_t data)
 {
     P2OUT &= ~BIT7;                 // CS low
     _delay_cycles(5000);
@@ -191,26 +236,60 @@ void spi_send(uint8_t address, uint8_t data)
     _delay_cycles(5000);
 }
 
+void spi_send_8(uint8_t data)
+{
+    //P2OUT &= ~BIT6;                 // CS low
+    //_delay_cycles(5000);
+    //while (!(UCB0IFG&UCTXIFG));     // Wait until done
+    UCB0TXBUF = (data);
+    while (!(UCB0IFG&UCTXIFG));     // Wait until done
+    //P2OUT |= BIT6;                  // CS high
+    //_delay_cycles(5000);
+}
+
 void init_8x8B_click(void)
 {
     // Initialise MAX7219 with 8x8 led matrix
-    spi_send(DISPLAYTEST, 0x00);    // NO OP (seems needed after power on)
-    spi_send(SCANLIMIT, 0x07);   // Enable all digits (always needed for current/8 per row)
-    spi_send(DECODEMODE, 0x00);   // Display intensity (0x00 to 0x0F)
+    spi_send_16(DISPLAYTEST, 0x00);    // NO OP (seems needed after power on)
+    spi_send_16(SCANLIMIT, 0x07);   // Enable all digits (always needed for current/8 per row)
+    spi_send_16(DECODEMODE, 0x00);   // Display intensity (0x00 to 0x0F)
 
     // Clear all rows/digits
-    spi_send(DIGIT0, 0);
-    spi_send(DIGIT1, 0);
-    spi_send(DIGIT2, 0);
-    spi_send(DIGIT3, 0);
-    spi_send(DIGIT4, 0);
-    spi_send(DIGIT5, 0);
-    spi_send(DIGIT6, 0);
-    spi_send(DIGIT7, 0);
-    spi_send(SHUTDOWN, 0); // Wake oscillators/display up
+    spi_send_16(DIGIT0, 0);
+    spi_send_16(DIGIT1, 0);
+    spi_send_16(DIGIT2, 0);
+    spi_send_16(DIGIT3, 0);
+    spi_send_16(DIGIT4, 0);
+    spi_send_16(DIGIT5, 0);
+    spi_send_16(DIGIT6, 0);
+    spi_send_16(DIGIT7, 0);
+    spi_send_16(SHUTDOWN, 0); // Wake oscillators/display up
 
     __delay_cycles(100000);
-    spi_send(SHUTDOWN, 1);
-    spi_send(INTENSITY, 0x3);
+    spi_send_16(SHUTDOWN, 1);
+    spi_send_16(INTENSITY, 0x3);
 
  }
+
+void init_thumbstick(void)
+{
+
+    uint8_t DinFirstByte = 0b00000110;      // Sets default Primary ADC Address register B00000110, This is a default address setting, the third LSB is set to one to start the ADC, the second LSB is to set the ADC to single ended mode, the LSB is for D2 address bit, for this ADC its a "Don't Care" bit.
+    uint8_t DinSecondByte = 0b01000000;
+    uint16_t DoutFirstByteMask = 0b0000000000001111;      // b00001111 isolates the 4 LSB for the value returned.
+    uint16_t DoutSecondByteMask = 0b0000000011111111;      // b00001111 isolates the 4 LSB for the value returned.
+
+    P2OUT &= ~BIT6;
+    spi_send_8(DinFirstByte);
+    spi_send_8(DinSecondByte); // read the primary byte, also sending in the secondary address byte.
+    DoutFirstByte = UCB0RXBUF & DoutFirstByteMask;
+    spi_send_8(0x00); // read the secondary byte, also sending 0 as this doesn't matter.
+    DoutSecondByte = UCB0RXBUF & DoutSecondByteMask;
+    P2OUT |= BIT6;
+
+    digitalValue = DinFirstByte;
+    digitalValue = digitalValue << 7;
+    digitalValue |= DoutSecondByte;
+    value = ((float)(digitalValue) * 2.048) / 4096.000;
+}
+
