@@ -16,6 +16,7 @@ main.obj: /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/i
 main.obj: /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/machine/_types.h
 main.obj: /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/machine/_stdint.h
 main.obj: /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/sys/_stdint.h
+main.obj: /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/stdlib.h
 
 ../main.c:
 
@@ -48,4 +49,6 @@ main.obj: /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/i
 /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/machine/_stdint.h:
 
 /Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/sys/_stdint.h:
+
+/Applications/ti/ccs1030/ccs/tools/compiler/ti-cgt-msp430_20.2.5.LTS/include/stdlib.h:
 
