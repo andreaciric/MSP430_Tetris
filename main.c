@@ -6,7 +6,7 @@ void spi_send_16(uint8_t address, uint8_t data);
 void spi_send_8(uint8_t data);
 void init_8x8B_click(void);
 void init(void);
-void init_thumbstick(void);
+void thumbstick(void);
 
 // MAX7219 Register addresses
 #define NOOP        0x00
@@ -36,27 +36,36 @@ void init_thumbstick(void);
 
 // variables
 uint8_t i = 0, j = 0, k = 0;
-uint8_t digit[] = {DIGIT0, DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5, DIGIT6, DIGIT7};
-uint8_t segments[] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
+const uint8_t digit[] = {DIGIT0, DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5, DIGIT6, DIGIT7};
+const uint8_t segments[] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
 uint8_t dont_allow = 0;
+uint8_t dont_allow_next = 0;
 uint8_t bottom = 0;
 uint8_t end = 0;
 uint8_t clear_row = 1;
 uint8_t clear_bit = 0;
 uint8_t start = 4;
+uint8_t istart = 4;
 uint8_t object_type = 0;
 uint8_t rotation = 0;
 
 uint8_t side = 1; //left = 0, static = 1, right = 2
 
+//thumbstick
+const uint8_t DinFirstByte = 0b00000110;      // Sets default Primary ADC Address register B00000110, This is a default address setting, the third LSB is set to one to start the ADC, the second LSB is to set the ADC to single ended mode, the LSB is for D2 address bit, for this ADC its a "Don't Care" bit.
+const uint8_t DinSecondByte = 0b01000000;
+const uint16_t DoutFirstByteMask = 0b0000000000001111;      // b00001111 isolates the 4 LSB for the value returned.
+const uint16_t DoutSecondByteMask = 0b0000000011111111;      // b00001111 isolates the 4 LSB for the value returned.
 uint16_t DoutFirstByte = 0;
 uint16_t DoutSecondByte = 0;
 uint16_t digitalValue = 0;
 
+
 float value = -1;
 
 /* init tetris shapes */
-uint8_t screen[] = {SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0};
+uint8_t screen[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t endscreen[] = {0x00, SEG1+SEG4+SEG6, SEG1+SEG4+SEG5, SEG1+SEG2+SEG3+SEG4, 0x00, SEG1+SEG2+SEG3+SEG4, SEG2+SEG4, SEG1+SEG2+SEG3+SEG4};
 
 uint8_t temp[4][16] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
@@ -127,6 +136,7 @@ int main(void)
       object_type = (rand() % 8) - 1;
       bottom = 0;
       dont_allow = 0;
+      dont_allow_next = 0;
       start = 4;
 
       /* GET OBJECT */
@@ -138,16 +148,20 @@ int main(void)
 
       while (!bottom){
 
-          init_thumbstick();
+          thumbstick();
 
           _delay_cycles(500000);
 
+          /* CHECKS FOR ROTATION */
+          if (!(P1IN & BIT4))
+              rotation = (rotation + 1) % 4;
+
+          /* CHECKS FOR HORIZONTAL MOVEMENT */
           if (value > 0.4)
               side = 2;
           else
               side = 1;
 
-          /* CHECKS FOR HORIZONTAL MOVEMENT */
           if (side == 0){
               if (start > 0)
                   start -= 1;
@@ -155,6 +169,7 @@ int main(void)
               if (start < 8)
                   start += 1;
           }
+          istart = i + start;
 
           /* PRINT SCREEN */
           for (i = 0; i < 8; i++){
@@ -170,7 +185,9 @@ int main(void)
 
           /* CHECK IF NEXT MOVE CAN BE REALISED */
           for (i = 0; i < 8; i++) {
-              if (((screen[i] & next[rotation][i+start]) != 0) && !dont_allow) {
+              if ((temp[rotation][i+start] & SEG0) && !dont_allow )
+                  dont_allow = 1;
+              else if (((screen[i] & next[rotation][i+start]) != 0) && !dont_allow) {
                   dont_allow = 1;
               }
           }
@@ -215,21 +232,29 @@ int main(void)
           }
       }
   }
+  /* PRINT SCREEN */
+  for (i = 0; i < 8; i++){
+      spi_send_16(digit[i], endscreen[i] );
+  }
+
 }
 
 void init(void)
 {
     WDTCTL = WDTPW+WDTHOLD;                   // Stop watchdog timer
 
-    /*  */
-    P2OUT |= BIT7;                            // Set P6.4 for CS
-    P2DIR |= BIT7;                            // Set P6.4 to output direction
-    P2OUT |= BIT6;                            // Set P6.4 for CS
-    P2DIR |= BIT6;                            // Set P6.4 to output direction
+    /* pins init */
+    P2OUT |= BIT7;                            // Set P2.7 for CS (spi 8x8 B click)
+    P2DIR |= BIT7;                            // Set P2.7 to output direction
+    P2OUT |= BIT6;                            // Set P2.6 for CS (spi thumbstick click)
+    P2DIR |= BIT6;                            // Set P2.6 to output direction
+    P1OUT |= BIT4;                            // Set P1.4 for thumbstick INT
+    P1DIR |= BIT4;                            // Set P1.4 to output direction
+
     P3SEL |= BIT0+BIT1+BIT2;                  // P3.0,2 option select
 
 
-    /*  */
+    /* SPI init */
     UCB0CTL1 |= UCSWRST;                      // **Put state machine in reset**
     UCB0CTL0 |= UCMST+UCCKPH+UCMSB+UCSYNC;    // 3-pin, 8-bit SPI master
                                                                                                        // MSB
@@ -270,9 +295,9 @@ void spi_send_8(uint8_t data)
 void init_8x8B_click(void)
 {
     // Initialise MAX7219 with 8x8 led matrix
-    spi_send_16(DISPLAYTEST, 0x00);    // NO OP (seems needed after power on)
-    spi_send_16(SCANLIMIT, 0x07);   // Enable all digits (always needed for current/8 per row)
-    spi_send_16(DECODEMODE, 0x00);   // Display intensity (0x00 to 0x0F)
+    spi_send_16(DISPLAYTEST, 0x00);     // NO OP (seems needed after power on)
+    spi_send_16(SCANLIMIT, 0x07);       // Enable all digits (always needed for current/8 per row)
+    spi_send_16(DECODEMODE, 0x00);      // Display intensity (0x00 to 0x0F)
 
     // Clear all rows/digits
     spi_send_16(DIGIT0, 0);
@@ -283,7 +308,7 @@ void init_8x8B_click(void)
     spi_send_16(DIGIT5, 0);
     spi_send_16(DIGIT6, 0);
     spi_send_16(DIGIT7, 0);
-    spi_send_16(SHUTDOWN, 0); // Wake oscillators/display up
+    spi_send_16(SHUTDOWN, 0);           // Wake oscillators/display up
 
     __delay_cycles(100000);
     spi_send_16(SHUTDOWN, 1);
@@ -291,14 +316,8 @@ void init_8x8B_click(void)
 
  }
 
-void init_thumbstick(void)
+void thumbstick(void)
 {
-
-    uint8_t DinFirstByte = 0b00000110;      // Sets default Primary ADC Address register B00000110, This is a default address setting, the third LSB is set to one to start the ADC, the second LSB is to set the ADC to single ended mode, the LSB is for D2 address bit, for this ADC its a "Don't Care" bit.
-    uint8_t DinSecondByte = 0b01000000;
-    uint16_t DoutFirstByteMask = 0b0000000000001111;      // b00001111 isolates the 4 LSB for the value returned.
-    uint16_t DoutSecondByteMask = 0b0000000011111111;      // b00001111 isolates the 4 LSB for the value returned.
-
     P2OUT &= ~BIT6;
     spi_send_8(DinFirstByte);
     spi_send_8(DinSecondByte); // read the primary byte, also sending in the secondary address byte.
