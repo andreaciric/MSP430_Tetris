@@ -61,8 +61,6 @@ uint16_t DoutSecondByte = 0;
 uint16_t digitalValue = 0;
 
 
-float value = -1;
-
 /* init tetris shapes */
 uint8_t screen[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t endscreen[] = {0x00, SEG1+SEG4+SEG6, SEG1+SEG4+SEG5, SEG1+SEG2+SEG3+SEG4, 0x00, SEG1+SEG2+SEG3+SEG4, SEG2+SEG4, SEG1+SEG2+SEG3+SEG4};
@@ -130,6 +128,10 @@ int main(void)
   init();
   init_8x8B_click();
 
+//  while(1){
+//      thumbstick();
+//  }
+
   while (!end){
 
 
@@ -157,8 +159,10 @@ int main(void)
               rotation = (rotation + 1) % 4;
 
           /* CHECKS FOR HORIZONTAL MOVEMENT */
-          if (value > 0.4)
+          if (digitalValue > 1500)
               side = 2;
+          else if (digitalValue < 500)
+              side = 0;
           else
               side = 1;
 
@@ -210,6 +214,8 @@ int main(void)
       /* DELETE FULL ROWS */
       for (i = 0; i < 8; i++){
         for (j = 0; j < 8; j++){
+            i = i;
+            j = j;
             if ((full_row[i][j] & screen[j]) != 1)      //checks if row is (not) full
                 clear_row = 0;
         }
@@ -252,6 +258,10 @@ void init(void)
     P1DIR |= BIT4;                            // Set P1.4 to output direction
 
     P3SEL |= BIT0+BIT1+BIT2;                  // P3.0,2 option select
+    P4SEL |= BIT1+BIT2+BIT3;                  // P3.0,2 option select
+
+    P1IE |= BIT4;
+
 
 
     /* SPI init */
@@ -264,6 +274,17 @@ void init(void)
     UCB0BR1 = 0;                              //
     UCB0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
 
+    /* SPI init */
+    UCB1CTL1 |= UCSWRST;                      // **Put state machine in reset**
+    UCB1CTL0 |= UCMST+UCCKPH+UCMSB+UCSYNC;    // 3-pin, 8-bit SPI master
+                                                                                                       // MSB
+
+    UCB1CTL1 |= UCSSEL_2;                     // SMCLK
+    UCB1BR0 = 0x02;                           // /2
+    UCB1BR1 = 0;                              //
+    UCB1CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+
+    __enable_interrupt();           // GIE
 }
 
 // Send 16 bits as: xxxxaaaadddddddd (ignore, address, data)
@@ -286,8 +307,8 @@ void spi_send_8(uint8_t data)
     //P2OUT &= ~BIT6;                 // CS low
     //_delay_cycles(5000);
     //while (!(UCB0IFG&UCTXIFG));     // Wait until done
-    UCB0TXBUF = (data);
-    while (!(UCB0IFG&UCTXIFG));     // Wait until done
+    UCB1TXBUF = (data);
+    while (!(UCB1IFG&UCTXIFG));     // Wait until done
     //P2OUT |= BIT6;                  // CS high
     //_delay_cycles(5000);
 }
@@ -321,14 +342,18 @@ void thumbstick(void)
     P2OUT &= ~BIT6;
     spi_send_8(DinFirstByte);
     spi_send_8(DinSecondByte); // read the primary byte, also sending in the secondary address byte.
-    DoutFirstByte = UCB0RXBUF & DoutFirstByteMask;
+    DoutFirstByte = UCB1RXBUF & DoutFirstByteMask;
     spi_send_8(0x00); // read the secondary byte, also sending 0 as this doesn't matter.
-    DoutSecondByte = UCB0RXBUF & DoutSecondByteMask;
+    DoutSecondByte = UCB1RXBUF & DoutSecondByteMask;
     P2OUT |= BIT6;
 
-    digitalValue = DinFirstByte;
+    digitalValue = DoutFirstByte;
     digitalValue = digitalValue << 7;
     digitalValue |= DoutSecondByte;
-    value = ((float)(digitalValue) * 2.048) / 4096.000;
+    //value = ((float)(digitalValue) * 2.048) / 4096.000;
 }
 
+void __attribute__ ((interrupt(PORT1_VECTOR))) P1ISR (void)
+{
+    P1IFG = 0;
+}
