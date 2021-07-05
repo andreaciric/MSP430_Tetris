@@ -145,11 +145,6 @@ int main(void)
 
           _delay_cycles(500000);
 
-          //umesto zakomentarisanog u isr.asm
-          /* CHECKS FOR ROTATION */
-            if (!(P1IN & BIT4))
-                rotation = (rotation + 1) % 4;
-
           /* CHECKS FOR HORIZONTAL MOVEMENT */
           if (digitalValue > 1500)
               side = 2;
@@ -340,8 +335,14 @@ void init_8x8B_click(void)
 
  }
 
+//static unsigned char fifo_first[256];
+//static unsigned char fifo_second[256];
+//static unsigned char index=0;
+
 void thumbstick(void)
 {
+
+
     P2OUT &= ~BIT6;
     spi_send_8(DinFirstByte);
     spi_send_8(DinSecondByte); // read the primary byte, also sending in the secondary address byte.
@@ -350,10 +351,13 @@ void thumbstick(void)
     DoutSecondByte = UCB1RXBUF & DoutSecondByteMask;
     P2OUT |= BIT6;
 
+    //fifo_first[index]=DoutFirstByte;
+    //fifo_second[index]=DoutSecondByte;
+    //index++;
+
     digitalValue = DoutFirstByte;
     digitalValue = digitalValue << 7;
     digitalValue |= DoutSecondByte;
-    //value = ((float)(digitalValue) * 2.048) / 4096.000;
 }
 
 //void __attribute__ ((interrupt(PORT1_VECTOR))) P1ISR (void)
