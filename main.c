@@ -48,6 +48,8 @@ uint8_t start = 4;
 uint8_t istart = 4;
 uint8_t object_type = 0;
 uint8_t rotation = 0;
+uint8_t save_bit = 0;
+
 
 uint8_t side = 1; //left = 0, static = 1, right = 2
 
@@ -64,6 +66,7 @@ uint16_t digitalValue = 0;
 /* init tetris shapes */
 uint8_t screen[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t endscreen[] = {0x00, SEG1+SEG4+SEG6, SEG1+SEG4+SEG5, SEG1+SEG2+SEG3+SEG4, 0x00, SEG1+SEG2+SEG3+SEG4, SEG2+SEG4, SEG1+SEG2+SEG3+SEG4};
+uint8_t save_under[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 uint8_t temp[4][16] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
@@ -77,7 +80,7 @@ uint8_t next[4][16] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
  };
 
-uint8_t full_row[8][8] = {{SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0},
+/*uint8_t full_row[8][8] = {{SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0},
                       {SEG1, SEG1, SEG1, SEG1, SEG1, SEG1, SEG1, SEG1},
                       {SEG2, SEG2, SEG2, SEG2, SEG2, SEG2, SEG2, SEG2},
                       {SEG3, SEG3, SEG3, SEG3, SEG3, SEG3, SEG3, SEG3},
@@ -86,6 +89,8 @@ uint8_t full_row[8][8] = {{SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0},
                       {SEG6, SEG6, SEG6, SEG6, SEG6, SEG6, SEG6, SEG6},
                       {SEG7, SEG7, SEG7, SEG7, SEG7, SEG7, SEG7, SEG7},
  };
+*/
+uint8_t full_row[8] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
 
 uint8_t all_shapes[7][4][16] = {{{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},         // O 1
                                {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},          // O 2
@@ -128,10 +133,6 @@ int main(void)
   init();
   init_8x8B_click();
 
-//  while(1){
-//      thumbstick();
-//  }
-
   while (!end){
 
 
@@ -154,9 +155,7 @@ int main(void)
 
           _delay_cycles(500000);
 
-          /* CHECKS FOR ROTATION */
-          if (!(P1IN & BIT4))
-              rotation = (rotation + 1) % 4;
+          //ovde
 
           /* CHECKS FOR HORIZONTAL MOVEMENT */
           if (digitalValue > 1500)
@@ -213,22 +212,33 @@ int main(void)
 
       /* DELETE FULL ROWS */
       for (i = 0; i < 8; i++){
-        for (j = 0; j < 8; j++){
+          j = 0;
+          while (clear_row && (j < 8)){
             i = i;
             j = j;
-            if ((full_row[i][j] & screen[j]) != 1)      //checks if row is (not) full
+            if ((full_row[i] & screen[j]) != full_row[i])      //checks if row is (not) full
                 clear_row = 0;
-        }
+            j++;
+          }
         if (clear_row){
             clear_bit = 1 << i;
             for (k = 0; k < 8; k++){                    //clears full row
                 screen[k] ^= clear_bit;
+                save_under[k] = 0;
             }
-            for (j = i; j < 8; j++){                    //moves down upper fields
-                screen[j] = ( screen[j] >> 1 );
+            for (j = 0; j < 8; j++){                    //save values of rows under the cleared one
+                for (k = i; k>0; k--){
+                    save_bit = 1 << (k-1);
+                    save_under[j] = (screen[j] & save_bit) | save_under[j];
+
+                }
+            }
+            for (j = 0; j < 8; j++){                    //moves down upper fields
+                screen[j] = ( screen[j] >> 1 ) | save_under[j];
                 spi_send_16(digit[j],  screen[j] );
             }
         }
+        clear_row = 1;
       }
 
       /* CHECK IF GAME ENDS */
@@ -356,4 +366,7 @@ void thumbstick(void)
 void __attribute__ ((interrupt(PORT1_VECTOR))) P1ISR (void)
 {
     P1IFG = 0;
+    /* CHECKS FOR ROTATION */
+      if (!(P1IN & BIT4))
+          rotation = (rotation + 1) % 4;
 }
