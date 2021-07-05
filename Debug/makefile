@@ -8,6 +8,7 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./isr.obj" \
 "./main.obj" \
 "../lnk_msp430f5529.cmd" \
 $(GEN_CMDS__FLAG) \
@@ -153,8 +154,9 @@ tetris.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" 
+	-$(RM) "isr.obj" "main.obj" 
 	-$(RM) "main.d" 
+	-$(RM) "isr.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

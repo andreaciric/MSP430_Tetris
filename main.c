@@ -47,7 +47,7 @@ uint8_t clear_bit = 0;
 uint8_t start = 4;
 uint8_t istart = 4;
 uint8_t object_type = 0;
-uint8_t rotation = 0;
+volatile uint8_t rotation = 0;
 uint8_t save_bit = 0;
 
 
@@ -80,16 +80,6 @@ uint8_t next[4][16] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x
                       {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
  };
 
-/*uint8_t full_row[8][8] = {{SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0, SEG0},
-                      {SEG1, SEG1, SEG1, SEG1, SEG1, SEG1, SEG1, SEG1},
-                      {SEG2, SEG2, SEG2, SEG2, SEG2, SEG2, SEG2, SEG2},
-                      {SEG3, SEG3, SEG3, SEG3, SEG3, SEG3, SEG3, SEG3},
-                      {SEG4, SEG4, SEG4, SEG4, SEG4, SEG4, SEG4, SEG4},
-                      {SEG5, SEG5, SEG5, SEG5, SEG5, SEG5, SEG5, SEG5},
-                      {SEG6, SEG6, SEG6, SEG6, SEG6, SEG6, SEG6, SEG6},
-                      {SEG7, SEG7, SEG7, SEG7, SEG7, SEG7, SEG7, SEG7},
- };
-*/
 uint8_t full_row[8] = {SEG0, SEG1, SEG2, SEG3, SEG4, SEG5, SEG6, SEG7};
 
 uint8_t all_shapes[7][4][16] = {{{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, SEG6+SEG7, SEG6+SEG7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},         // O 1
@@ -155,7 +145,10 @@ int main(void)
 
           _delay_cycles(500000);
 
-          //ovde
+          //umesto zakomentarisanog u isr.asm
+          /* CHECKS FOR ROTATION */
+            if (!(P1IN & BIT4))
+                rotation = (rotation + 1) % 4;
 
           /* CHECKS FOR HORIZONTAL MOVEMENT */
           if (digitalValue > 1500)
@@ -363,10 +356,10 @@ void thumbstick(void)
     //value = ((float)(digitalValue) * 2.048) / 4096.000;
 }
 
-void __attribute__ ((interrupt(PORT1_VECTOR))) P1ISR (void)
-{
-    P1IFG = 0;
-    /* CHECKS FOR ROTATION */
-      if (!(P1IN & BIT4))
-          rotation = (rotation + 1) % 4;
-}
+//void __attribute__ ((interrupt(PORT1_VECTOR))) P1ISR (void)
+//{
+//    P1IFG = 0;
+//    /* CHECKS FOR ROTATION */
+//      if (!(P1IN & BIT4))
+//          rotation = (rotation + 1) % 4;
+//}
